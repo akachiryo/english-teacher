@@ -1,19 +1,13 @@
 import 'package:avatar_glow/avatar_glow.dart';
-import 'package:english_teacher/right_balloon.dart';
-import 'package:english_teacher/left_balloon.dart';
+import 'package:english_teacher/widgets/right_balloon.dart';
+import 'package:english_teacher/widgets/left_balloon.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert' as convert;
-import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-
-class Message {
-  final String text;
-  final bool isUser;
-  final DateTime time;
-
-  Message({required this.text, required this.isUser, required this.time});
-}
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:english_teacher/widgets/text_input.dart';
+import 'package:english_teacher/models/message.dart';
+import 'package:english_teacher/utils/custom_location.dart';
+import 'package:english_teacher/api/post_chat.dart';
 
 class ChatRoom extends StatefulWidget {
   const ChatRoom({Key? key}) : super(key: key);
@@ -22,75 +16,26 @@ class ChatRoom extends StatefulWidget {
   _ChatRoomState createState() => _ChatRoomState();
 }
 
-class CustomLocation extends FloatingActionButtonLocation {
-  const CustomLocation();
-
-  @override
-  Offset getOffset(ScaffoldPrelayoutGeometry scaffoldGeometry) {
-    final fabX = scaffoldGeometry.scaffoldSize.width -
-        scaffoldGeometry.floatingActionButtonSize.width -
-        16.0;
-    final fabY = scaffoldGeometry.scaffoldSize.height -
-        scaffoldGeometry.floatingActionButtonSize.height -
-        60.0; // Change this value to move the FAB up or down.
-
-    return Offset(fabX, fabY);
-  }
-}
-
 class _ChatRoomState extends State<ChatRoom> {
   List<Message> messages = [];
   final TextEditingController textController = TextEditingController();
   SpeechToText speechToText = SpeechToText();
   var isListening = false;
 
-  Future<void> postChat(String text) async {
-    final token = dotenv.env['MY_TOKEN'];
-
-    var url = Uri.https("api.openai.com", "v1/chat/completions");
-
-    try {
-      final response = await http.post(
-        url,
-        body: convert.jsonEncode({
-          "model": "gpt-3.5-turbo",
-          "messages": [
-            {"role": "user", "content": text}
-          ]
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token"
-        },
-      );
-
-      if (response.statusCode == 200) {
-        Map<String, dynamic> answer =
-            convert.jsonDecode(convert.utf8.decode(response.bodyBytes));
-
-        if (answer['choices'] != null && answer['choices'].isNotEmpty) {
-          setState(() {
-            messages.add(Message(
-                text: answer['choices'][0]["message"]["content"] ?? '',
-                isUser: false,
-                time: DateTime.now()));
-          });
-        }
-      } else {
-        print("Error: ${response.body}");
-      }
-    } catch (e) {
-      print("Error posting chat: $e");
-    }
-  }
-
-  void handleSubmitted(String? text) {
+  void handleSubmitted(String? text) async {
     if (text != null && text.isNotEmpty) {
       setState(() {
         messages.add(Message(text: text, isUser: true, time: DateTime.now()));
-        postChat(text);
-        textController.clear();
       });
+
+      Message? botMessage = await postChat(text);
+      if (botMessage != null) {
+        setState(() {
+          messages.add(botMessage);
+        });
+      }
+
+      textController.clear();
     }
   }
 
@@ -180,34 +125,6 @@ class _ChatRoomState extends State<ChatRoom> {
             ),
           ),
         ]),
-      ),
-    );
-  }
-}
-
-class TextInput extends StatelessWidget {
-  final TextEditingController controller;
-  final Function(String?) onSubmitted;
-
-  const TextInput(
-      {Key? key, required this.controller, required this.onSubmitted})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: const BorderRadius.all(Radius.circular(40)),
-      ),
-      child: TextField(
-        controller: controller,
-        autofocus: true,
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-        ),
-        onSubmitted: onSubmitted,
       ),
     );
   }
