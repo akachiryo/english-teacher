@@ -1,13 +1,23 @@
-import 'package:avatar_glow/avatar_glow.dart';
-import 'package:english_teacher/widgets/right_balloon.dart';
-import 'package:english_teacher/widgets/left_balloon.dart';
+// ライブラリ
 import 'package:flutter/material.dart';
+import 'package:avatar_glow/avatar_glow.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:english_teacher/widgets/text_input.dart';
+
+// model
 import 'package:english_teacher/models/message.dart';
-import 'package:english_teacher/utils/custom_location.dart';
+
+// api
 import 'package:english_teacher/api/post_chat.dart';
+
+// widget
+import 'package:english_teacher/widgets/right_balloon.dart';
+import 'package:english_teacher/widgets/left_balloon.dart';
+import 'package:english_teacher/widgets/text_input.dart';
+
+// utils
+import 'package:english_teacher/utils/custom_location.dart';
+import 'package:english_teacher/utils/text_to_speech.dart';
 
 class ChatRoom extends StatefulWidget {
   const ChatRoom({Key? key}) : super(key: key);
@@ -20,6 +30,7 @@ class _ChatRoomState extends State<ChatRoom> {
   List<Message> messages = [];
   final TextEditingController textController = TextEditingController();
   SpeechToText speechToText = SpeechToText();
+  final TextToSpeech textToSpeech = TextToSpeech();
   var isListening = false;
 
   void handleSubmitted(String? text) async {
@@ -32,6 +43,7 @@ class _ChatRoomState extends State<ChatRoom> {
       if (botMessage != null) {
         setState(() {
           messages.add(botMessage);
+          textToSpeech.speak(botMessage.text);
         });
       }
 

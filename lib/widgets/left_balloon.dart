@@ -35,7 +35,7 @@ class LeftBalloon extends StatelessWidget {
               ),
               child: Padding(
                 padding: EdgeInsets.all(16.0),
-                child: Text(message),
+                child: SelectableText(message),
               ),
             ),
           ),
