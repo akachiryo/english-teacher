@@ -5,12 +5,12 @@ import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// New class definition
 class Message {
   final String text;
   final bool isUser;
+  final DateTime time;
 
-  Message({required this.text, required this.isUser});
+  Message({required this.text, required this.isUser, required this.time});
 }
 
 class ChatRoom extends StatefulWidget {
@@ -21,7 +21,7 @@ class ChatRoom extends StatefulWidget {
 }
 
 class _ChatRoomState extends State<ChatRoom> {
-  List<Message> messages = []; // Changed to Message instead of String
+  List<Message> messages = [];
   final TextEditingController textController = TextEditingController();
 
   Future<void> postChat(String text) async {
@@ -52,7 +52,8 @@ class _ChatRoomState extends State<ChatRoom> {
           setState(() {
             messages.add(Message(
                 text: answer['choices'][0]["message"]["content"] ?? '',
-                isUser: false));
+                isUser: false,
+                time: DateTime.now()));
           });
         }
       } else {
@@ -66,7 +67,7 @@ class _ChatRoomState extends State<ChatRoom> {
   void handleSubmitted(String? text) {
     if (text != null && text.isNotEmpty) {
       setState(() {
-        messages.add(Message(text: text, isUser: true));
+        messages.add(Message(text: text, isUser: true, time: DateTime.now()));
         postChat(text);
         textController.clear();
       });
@@ -88,9 +89,13 @@ class _ChatRoomState extends State<ChatRoom> {
                 itemCount: messages.length,
                 itemBuilder: (BuildContext context, int index) {
                   if (messages[index].isUser) {
-                    return RightBalloon(message: messages[index].text);
+                    return RightBalloon(
+                        message: messages[index].text,
+                        time: messages[index].time);
                   } else {
-                    return LeftBalloon(message: messages[index].text);
+                    return LeftBalloon(
+                        message: messages[index].text,
+                        time: messages[index].time);
                   }
                 }),
           ),
