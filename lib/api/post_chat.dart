@@ -11,16 +11,21 @@ Future<Message?> postChat(String text) async {
   try {
     final response = await http.post(
       url,
-      body: convert.jsonEncode({
-        "model": "gpt-3.5-turbo",
-        "messages": [
-          {"role": "user", "content": text}
-        ]
-      }),
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer $token"
       },
+      body: convert.jsonEncode({
+        "model": "gpt-3.5-turbo",
+        "messages": [
+          {
+            "role": "system",
+            "content":
+                "You are a friendly and casual AI model. You're not assisting with tasks or providing information. Your role is simply to engage in a light and friendly conversation."
+          },
+          {"role": "user", "content": text}
+        ]
+      }),
     );
 
     if (response.statusCode == 200) {
